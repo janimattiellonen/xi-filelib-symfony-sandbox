@@ -2,27 +2,9 @@ FilelibDemoBundle_homepage:
     pattern:  /
     defaults: { _controller: FilelibDemoBundle:Default:index }
 
-FilelibDemoBundle_selfish:
-    pattern:  /selfish
-    defaults: { _controller: FilelibDemoBundle:Default:selfish }
-
-FilelibDemoBundle_testSuite:
-    pattern:  /test-suite
-    defaults: { _controller: FilelibDemoBundle:Default:testSuite }
-
-
-FilelibDemoBundle_copyTest:
-    pattern:  /copy-test
-    defaults: { _controller: FilelibDemoBundle:Default:copyTest }
-
-FilelibDemoBundle_videoTest:
-    pattern:  /video-test
-    defaults: { _controller: FilelibDemoBundle:Default:videoTest }
-
-
-FilelibDemoBundle_asyncUpload:
-    pattern:  /async-upload
-    defaults: { _controller: FilelibDemoBundle:Default:asyncUploadTest }
+FilelibDemoBundle_upload:
+    pattern:  /upload
+    defaults: { _controller: FilelibDemoBundle:Default:upload }
 
 FilelibDemoBundle_clear:
     pattern:  /clear
