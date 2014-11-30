@@ -71,26 +71,11 @@ xi_filelib:
     authorization:
         enabled: false
         adapter_service: ~
-#    queue:
-#        type: Xi\Filelib\Queue\PhpAMQPQueue
-#        arguments: [ "%amqp_host%", 5672, "%amqp_username%", "%amqp_password%", "filelib", "filelib_exchange", "filelib_queue" ]
-#    slugifier:
-#        type: Xi\Filelib\Tool\Slugifier\Zend2Slugifier
-#    transliterator:
-#        type: Xi\Filelib\Tool\Transliterator\StupidTransliterator
-#        arguments: []
     renderer:
         enable_acceleration: false
         strip_prefix: "%kernel.root_dir%/data/files"
         add_prefix: "/protected"
-#    cache: default
     temp_dir: %kernel.root_dir%/data/temp
-#    backend:
-#        platform:
-#            doctrine_orm:
-#                entity_manager: doctrine.orm.default_entity_manager
-#                fileEntity: Xi\Filelib\Backend\Platform\DoctrineOrm\Entity\File
-#                folderEntity: Xi\Filelib\Backend\Platform\DoctrineOrm\Entity\Folder
     storage:
         root: %kernel.root_dir%/data/files
         file_permission: "664"
