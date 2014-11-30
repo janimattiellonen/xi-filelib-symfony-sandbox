@@ -14,7 +14,7 @@ framework:
     validation:      { enable_annotations: true }
     templating:      { engines: ['twig'] } #assets_version: SomeVersionScheme
     default_locale:  %locale%
-    trust_proxy_headers: false # Whether or not the Request object should trust proxy headers (X_FORWARDED_FOR/HTTP_CLIENT_IP)
+    trusted_proxies: ~
     session:         ~
 
 # Twig Configuration
@@ -48,13 +48,16 @@ doctrine:
 
     orm:
         auto_generate_proxy_classes: %kernel.debug%
-        auto_mapping: true
-        mappings:
-            xi_filelib:
-                dir:    %kernel.root_dir%/../vendor/xi/filelib/library/Xi/Filelib/Backend/Platform/DoctrineOrm/Entity
-                prefix: Xi\Filelib\Backend\Platform\DoctrineOrm\Entity
-                type:   annotation
-                is_bundle: false
+
+        entity_managers:
+            default:
+                auto_mapping: true
+                mappings:
+                    xi_filelib:
+                        dir: %kernel.root_dir%/../vendor/xi/filelib/library/Xi/Filelib/Backend/Adapter/DoctrineOrm/Entity
+                        prefix: Xi\Filelib\Backend\Adapter\DoctrineOrm\Entity
+                        type: annotation
+                        is_bundle: false
 
 # Swiftmailer Configuration
 swiftmailer:
@@ -65,168 +68,110 @@ swiftmailer:
     spool:     { type: memory }
 
 xi_filelib:
-    queue:
-        type: Xi\Filelib\Queue\PhpAMQPQueue
-        arguments: [ "%amqp_host%", 5672, "%amqp_username%", "%amqp_password%", "filelib", "filelib_exchange", "filelib_queue" ]
-    slugifier:
-        type: Xi\Filelib\Tool\Slugifier\Zend2Slugifier
-    transliterator:
-        type: Xi\Filelib\Tool\Transliterator\StupidTransliterator
-        arguments: []
+    authorization:
+        enabled: false
+        adapter_service: ~
+#    queue:
+#        type: Xi\Filelib\Queue\PhpAMQPQueue
+#        arguments: [ "%amqp_host%", 5672, "%amqp_username%", "%amqp_password%", "filelib", "filelib_exchange", "filelib_queue" ]
+#    slugifier:
+#        type: Xi\Filelib\Tool\Slugifier\Zend2Slugifier
+#    transliterator:
+#        type: Xi\Filelib\Tool\Transliterator\StupidTransliterator
+#        arguments: []
     renderer:
-        accelerate: false
-        stripPrefixFromAcceleratedPath: "%kernel.root_dir%/data/files"
-        addPrefixToAcceleratedPath: "/protected"
-    cache: default
-    tempDir: %kernel.root_dir%/data/temp
-    backend:
-        platform:
-            doctrine_orm:
-                entity_manager: doctrine.orm.default_entity_manager
-                fileEntity: Xi\Filelib\Backend\Platform\DoctrineOrm\Entity\File
-                folderEntity: Xi\Filelib\Backend\Platform\DoctrineOrm\Entity\Folder
-    storage_filesystem:
-        directoryPermission: '775'
-        filePermission: '644'
+        enable_acceleration: false
+        strip_prefix: "%kernel.root_dir%/data/files"
+        add_prefix: "/protected"
+#    cache: default
+    temp_dir: %kernel.root_dir%/data/temp
+#    backend:
+#        platform:
+#            doctrine_orm:
+#                entity_manager: doctrine.orm.default_entity_manager
+#                fileEntity: Xi\Filelib\Backend\Platform\DoctrineOrm\Entity\File
+#                folderEntity: Xi\Filelib\Backend\Platform\DoctrineOrm\Entity\Folder
+    storage:
         root: %kernel.root_dir%/data/files
-        directoryIdCalculator:
-#            type: Xi\Filelib\Storage\Filesystem\DirectoryIdCalculator\TimeDirectoryIdCalculator
-#            options: { format: Y/m/d }
-            type: Xi\Filelib\Storage\Filesystem\DirectoryIdCalculator\LeveledDirectoryIdCalculator
-            options: { directoryLevels: 3, filesPerDirectory: 500 }
+        file_permission: "664"
+        directory_permission: "775"
+        directory_id_calculator:
+            class: Xi\Filelib\Storage\Adapter\Filesystem\DirectoryIdCalculator\LeveledDirectoryIdCalculator
+            arguments: [ 3, 500 ]
     publisher:
-        type: Xi\Filelib\Publisher\Filesystem\SymlinkFilesystemPublisher
-        options:
-            relativePathToRoot: ../../app/data/files
-            baseUrl: /files
-            publicRoot: %kernel.root_dir%/../web/files
-    profiles:
-        default:
-            identifier: default
-            description: 'Upload the original file, unmodified'
-            accessToOriginal: true
-            publishOriginal: true
-            linker:
-                type: Xi\Filelib\Linker\SequentialLinker
-                options:
-                    filesPerDirectory: 500
-                    directoryLevels: 3
-        versioned:
-            identifier: versioned
-            description: 'Create web optimized versions'
-            accessToOriginal: true
-            publishOriginal: true
-            linker:
-                type: Xi\Filelib\Linker\BeautifurlLinker
-#                options:
-#                    slugify: false
+        automatic_publisher: true
+        beautifurls: false
+        adapter:
+            class: Xi\Filelib\Publisher\Adapter\Filesystem\SymlinkFilesystemPublisherAdapter
+            arguments: [ "%kernel.root_dir%/../web/files", "664", "775", "/files", "../../app/data/files" ]
+    profiles: ['image_question']
     plugins:
-        preformat:
-            identifier: preformat
-            type: Xi\Filelib\Plugin\Image\ChangeFormatPlugin
-            profiles: [versioned]
-            targetExtension: jpg
-            imageMagickOptions:
-                ImageCompression: 8
-                ImageFormat: jpg
-                ImageCompressionQuality: 80
-            extension: jpg
-            commands:
-                scale:
-                    type: Xi\Filelib\Plugin\Image\Command\ExecuteMethodCommand
-                    method: scaleImage
-                    parameters: [ 1024, 768, 1]
-                modulate:
-                    type: Xi\Filelib\Plugin\Image\Command\ExecuteMethodCommand
-                    method: modulateImage
-                    parameters: [ 100, 30, 100 ]
+        changeFormatPlugin:
+            class: Xi\Filelib\Plugin\Image\ChangeFormatPlugin
+            profiles: []
+            arguments:
+                -
+                    0: [ setImageCompression, 8 ]
+                    1: [ setImageFormat, jpg]
+                    2: [ setImageCompressionQuality, 80 ]
+                    3: [ scaleImage, [ 1024, 768, true ]]
+                    4: [ setInterlaceScheme, 3 ]
+
         randomizer:
             priority: 20
-            identifier: randomizer
-            type: Xi\Filelib\Plugin\RandomizeNamePlugin
-            profiles: [default, versioned]
+            class: Xi\Filelib\Plugin\RandomizeNamePlugin
+            profiles: []
+            arguments:
+                prefix: media
 
         mini:
-            identifier: mini
-            type: Xi\Filelib\Plugin\Image\VersionPlugin
-            profiles: [versioned]
-            imageMagickOptions:
-                ImageCompression: 8
-                ImageFormat: jpg
-                ImageCompressionQuality: 30
-            extension: jpg
-            commands:
-                scale:
-                    type: Xi\Filelib\Plugin\Image\Command\ExecuteMethodCommand
-                    method: scaleImage
-                    parameters: [ 320, 200, 1]
+            class: Xi\Filelib\Plugin\Image\VersionPlugin
+            profiles: []
+            arguments:
+                -
+                    mini:
+                        -
+                            0: [ setImageCompression, 8 ]
+                            1: [ setImageFormat, jpg]
+                            2: [ setImageCompressionQuality, 30 ]
+                            3: [ scaleImage, [ 320, 200, true ]]
+                            4: [ setInterlaceScheme, 3 ]
+
         cropped:
-            identifier: cropped
-            type: Xi\Filelib\Plugin\Image\VersionPlugin
-            profiles: [versioned]
-            imageMagickOptions:
-                ImageCompression: 8
-                ImageFormat: jpg
-                ImageCompressionQuality: 30
-            extension: jpg
-            commands:
-                scale:
-                    type: Xi\Filelib\Plugin\Image\Command\ExecuteMethodCommand
-                    method: cropThumbnailImage
-                    parameters: [100, 100]
+            class: Xi\Filelib\Plugin\Image\VersionPlugin
+            profiles: []
+            arguments:
+                -
+                    cropped:
+                        -
+                            0: [ setImageCompression, 8 ]
+                            1: [ setImageFormat, jpg]
+                            2: [ setImageCompressionQuality, 30 ]
+                            3: [ scaleImage, [ 100, 100, 1 ]]
+                            4: [ setInterlaceScheme, 3 ]
+
         cinemascope:
-            identifier: cinemascope
-            type: Xi\Filelib\Plugin\Image\VersionPlugin
-            profiles: [versioned]
-            imageMagickOptions:
-                ImageCompression: 8
-                ImageFormat: jpg
-                ImageCompressionQuality: 30
-            extension: jpg
-            commands:
-                scale:
-                    type: Xi\Filelib\Plugin\Image\Command\ExecuteMethodCommand
-                    method: cropThumbnailImage
-                    parameters: [800, 200]
-                sepia:
-                    type: Xi\Filelib\Plugin\Image\Command\ExecuteMethodCommand
-                    method: sepiaToneImage
-                    parameters: [ 90 ]
+            class: Xi\Filelib\Plugin\Image\VersionPlugin
+            profiles: []
+            arguments:
+                -
+                    cinemascope:
+                        -
+                            0: [ setImageCompression, 8 ]
+                            1: [ setImageFormat, jpg]
+                            2: [ setImageCompressionQuality, 30 ]
+                            3: [ scaleImage, [ 800, 200, 1 ]]
+                            4: [ setInterlaceScheme, 3 ]
         thumb:
-            identifier: thumb
-            type: Xi\Filelib\Plugin\Image\VersionPlugin
-            profiles: [versioned]
-            imageMagickOptions:
-                ImageCompression: '8'
-                ImageFormat: jpg
-                ImageCompressionQuality: 50
-            extension: jpg
-            commands:
-                scale:
-                    type: Xi\Filelib\Plugin\Image\Command\ExecuteMethodCommand
-                    method: scaleImage
-                    parameters: ['640', '480', true]
-                watermark:
-                    type: Xi\Filelib\Plugin\Image\Command\WatermarkCommand
-                    WaterMarkImage: %kernel.root_dir%/data/watermark.png
-                    WaterMarkPosition: se
-                    WaterMarkPadding: 10
-#        zencoder:
-#            identifier: zencoder
-#            type: Xi\Filelib\Plugin\Video\ZencoderPlugin
-#            profiles: [versioned]
-#            apiKey: %zencoder_key%
-#            awsKey: %s3_key%
-#            awsSecretKey: %s3_secretkey%
-#            awsBucket: %s3_bucket%
-#            outputs:
-#                pygmi:
-#                    extension: mp4
-#                    output:
-#                        label: pygmi
-#                        device_profile: v2/mobile/legacy
-#                watussi:
-#                    extension: mp4
-#                    output:
-#                        label: watussi
-#                        device_profile: v2/mobile/advanced
+            class: Xi\Filelib\Plugin\Image\VersionPlugin
+            profiles: []
+            arguments:
+                -
+                    thumb:
+                        -
+                            0: [ setImageCompression, 8 ]
+                            1: [ setImageFormat, jpg]
+                            2: [ setImageCompressionQuality, 50 ]
+                            3: [ scaleImage, [ 640, 480, 1 ]]
+                            4: [ setInterlaceScheme, 3 ]
+                            Xi\Filelib\Plugin\Image\Command\WatermarkCommand: [ %kernel.root_dir%/data/watermark.png, se, 10 ]

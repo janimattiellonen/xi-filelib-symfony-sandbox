@@ -14,21 +14,20 @@
 
     "require": {
         "php": ">=5.3.3",
-        "xi/filelib": "0.8.*@dev",
-        "xi/filelib-bundle": "0.8.*@dev",
-        "symfony/symfony": "2.1.*",
-        "doctrine/orm": ">=2.2.3,<2.4-dev",
-        "doctrine/doctrine-bundle": "1.0.*",
-        "twig/extensions": "1.0.*@dev",
-        "kriswallsmith/assetic": "@alpha",
-        "symfony/assetic-bundle": "2.1.*",
-        "symfony/swiftmailer-bundle": "2.1.*",
-        "symfony/monolog-bundle": "2.1.*",
-        "sensio/distribution-bundle": "2.1.*",
-        "sensio/framework-extra-bundle": "2.1.*",
-        "sensio/generator-bundle": "2.1.*",
-        "jms/security-extra-bundle": "1.2.*",
-        "jms/di-extra-bundle": "1.1.*",
+        "xi/filelib": "0.12.*",
+        "xi/filelib-bundle": "0.12.*",
+        "symfony/symfony": "2.4.*",
+        "doctrine/orm": ">=2.2.3,<2.5-dev",
+        "doctrine/doctrine-bundle": "1.3.*",
+        "twig/extensions": "1.2.*",
+        "symfony/assetic-bundle": "2.3.1.*",
+        "symfony/swiftmailer-bundle": "2.3.*",
+        "symfony/monolog-bundle": "2.6.*",
+        "sensio/distribution-bundle": "3.0.*",
+        "sensio/framework-extra-bundle": "3.0.*",
+        "sensio/generator-bundle": "2.4.*",
+        "jms/security-extra-bundle": "1.5.*",
+        "jms/di-extra-bundle": "1.5.*",
         "zendframework/zend-filter": "2.0.*",
         "zendframework/zend-stdlib": "2.0.*",
         "zendframework/zend-i18n": "2.0.*",
@@ -36,6 +35,7 @@
     },
     "scripts": {
         "post-install-cmd": [
+            "Incenteev\\ParameterHandler\\ScriptHandler::buildParameters",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::buildBootstrap",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::clearCache",
             "Sensio\\Bundle\\DistributionBundle\\Composer\\ScriptHandler::installAssets",
@@ -51,6 +51,9 @@
     "minimum-stability": "stable",
     "extra": {
         "symfony-app-dir": "app",
-        "symfony-web-dir": "web"
+        "symfony-web-dir": "web",
+        "incenteev-parameters": {
+            "file": "app/config/parameters.yml"
+        }
     }
 }

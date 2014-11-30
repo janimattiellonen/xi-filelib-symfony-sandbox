@@ -30,6 +30,14 @@ class DefaultController extends Controller
         // We want to upload curious manatee image.
         $path = $this->get('kernel')->getRootDir() . "/data/uploads/west_indian_manatee_and_nursing_calf_crystal_river_florida.jpg";
 
+		//die($path);
+		$file = $filelib->uploadFile($path);
+		//print_r($file);die;
+		$publisher = $this->get('xi_filelib.publisher');
+
+		$publisher->publishAllVersions($file);
+
+		/*
         // Find root folder
         $folder = $filelib->getFolderOperator()->findRoot();
 
@@ -50,6 +58,7 @@ class DefaultController extends Controller
         $op = $filelib->getFileOperator();
 
         $file = $op->upload($upload, $folder, 'versioned');
+		*/
 
         return $this->render('FilelibDemoBundle:Default:index.html.twig', array(
             'fl' => $filelib,
